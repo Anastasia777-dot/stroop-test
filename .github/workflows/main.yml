@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroop Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .hidden {
+            display: none;
+        }
+        .word {
+            font-size: 2rem;
+            margin: 20px 0;
+        }
+        .options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .options button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stroop Test</h1>
+    <div id="instructions">
+        <p>Выберите цвет текста, игнорируя его содержание. Выбирайте так быстро, как только можете.</p>
+        <button onclick="startTest()">Начать тест</button>
+    </div>
+
+    <div id="test" class="hidden">
+        <div class="word" id="word"></div>
+        <div class="options" id="options"></div>
+    </div>
+
+    <div id="results" class="hidden">
+        <h2>Результаты</h2>
+        <p>Правильных ответов: <span id="correct-count"></span> из <span id="total-count"></span></p>
+        <p>Среднее время реакции: <span id="average-time"></span> секунд</p>
+        <p>Среднее время прохождения теста: <span id="average-test-time"></span> секунд</p>
+        <button onclick="location.reload()">Пройти заново</button>
+    </div>
+
+    <script>
+        const words = [
+            { text: 'красный', color: 'blue' },
+            { text: 'синий', color: 'green' },
+            { text: 'зеленый', color: 'yellow' },
+            { text: 'желтый', color: 'red' },
+            { text: '红', color: 'green' },
+            { text: '蓝', color: 'red' },
+            { text: '绿', color: 'yellow' },
+            { text: '黄', color: 'blue' },
+            { text: 'red', color: 'green' },
+            { text: 'blue', color: 'yellow' },
+            { text: 'green', color: 'red' },
+            { text: 'yellow', color: 'blue' }
+        ];
+
+        let currentWordIndex = 0;
+        let correctAnswers = 0;
+        let reactionTimes = [];
+        let startTime;
+        let startTestTime;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startTest() {
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('test').classList.remove('hidden');
+            shuffle(words);
+            startTestTime = Date.now();
+            showNextWord();
+        }
+
+        function showNextWord() {
+            if (currentWordIndex >= words.length) {
+                endTest();
+                return;
+            }
+
+            const wordData = words[currentWordIndex];
+            const wordElement = document.getElementById('word');
+            const optionsElement = document.getElementById('options');
+
+            wordElement.textContent = wordData.text;
+            wordElement.style.color = wordData.color;
+
+            const colors = ['red', 'blue', 'green', 'yellow'];
+            shuffle(colors);
+
+            optionsElement.innerHTML = '';
+            colors.forEach(color => {
+                const button = document.createElement('button');
+                button.textContent = color;
+                button.style.backgroundColor = color;
+                button.onclick = () => handleAnswer(color);
+                optionsElement.appendChild(button);
+            });
+
+            startTime = Date.now();
+        }
+
+        function handleAnswer(selectedColor) {
+            const wordData = words[currentWordIndex];
+            const reactionTime = (Date.now() - startTime) / 1000;
+            reactionTimes.push(reactionTime);
+
+            if (selectedColor === wordData.color) {
+                correctAnswers++;
+            }
+
+            currentWordIndex++;
+            showNextWord();
+        }
+
+        function endTest() {
+            document.getElementById('test').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+
+            const correctCountElement = document.getElementById('correct-count');
+            const totalCountElement = document.getElementById('total-count');
+            const averageTimeElement = document.getElementById('average-time');
+            const averageTestTimeElement = document.getElementById('average-test-time');
+
+            correctCountElement.textContent = correctAnswers;
+            totalCountElement.textContent = words.length;
+
+            const averageTime = (reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length).toFixed(2);
+            averageTimeElement.textContent = averageTime;
+
+            const totalTestTime = (Date.now() - startTestTime) / 1000;
+            const averageTestTime = (totalTestTime / words.length).toFixed(2);
+            averageTestTimeElement.textContent = averageTestTime;
+        }
+    </script>
+</body>
+</html>
